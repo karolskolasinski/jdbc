@@ -24,6 +24,7 @@ public class Main {
     private static final String DELETE_QUERY = "DELETE FROM `jdbc_students`.`students` WHERE `id` = ?";
     private static final String SELECT_ALL_QUERY = "SELECT * FROM `students`;";
     private static final String SELECT_BY_ID_QUERY = "SELECT * FROM `students` WHERE `id` = ?;";
+    private static final String SELECT_BY_NAME_QUERY = "SELECT * FROM `students` WHERE `name` LIKE ?;";
 
     /*DBC_VAR*/
     private static final String DB_HOST = "localhost";
@@ -50,7 +51,7 @@ public class Main {
         String command;
 
         do {
-            System.out.println("co chcesz zrobić? \ndodać studenta (d) :: usuń (u) :: listuj (l) :: wypisz studenta (w) quit (q)");
+            System.out.println("co chcesz zrobić? \ndodać studenta (d) :: usuń (u) :: listuj (l) :: wypisz studenta po id (id) :: wypisz po nazwisku (name) :: quit (q)");
             command = scanner.nextLine();
 
             switch (command) {
@@ -93,13 +94,22 @@ public class Main {
                     }
                     break;
                 case "w":
-                    System.out.println("podaj id studenta do usunięcia");
-                    Long searchedId = Long.valueOf(scanner.nextLine());
+                System.out.println("podaj id studenta do wypisania");
+                Long searchedId = Long.valueOf(scanner.nextLine());
+                try {
+                    getByIdStudent(connection, searchedId);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                case "name":
+                    System.out.println("podaj nazwisko studenta do wypisania");
+                    String searchedName = scanner.nextLine();
                     try {
-                        getByIdStudent(connection, searchedId);
+                        getByNameStudent(connection, searchedName);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
+                    break;
                 case "q":
                     break;
                 default:
@@ -109,10 +119,29 @@ public class Main {
 
     }
 
+    private static void getByNameStudent(Connection connection, String searchedName) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(SELECT_BY_NAME_QUERY)) {
+            statement.setString(1, "%" + searchedName + "%");
+//            statement.setLong(1, "%" + searchedId + "%");
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) { // jeśli jest rekord
+                Student student = new Student();
+                student.setId(resultSet.getLong(1));
+                student.setName(resultSet.getString(2));
+                student.setAge(resultSet.getInt(3));
+                student.setAverage(resultSet.getDouble(4));
+                student.setAlive(resultSet.getBoolean(5));
+                System.out.println(student);
+            } else {
+                System.out.println("Nie udało się odnaleźć studenta");
+            }
+        }
+
+    }
+
     private static void getByIdStudent(Connection connection, Long searchedId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(SELECT_BY_ID_QUERY)) {
             statement.setLong(1, searchedId);
-//            statement.setLong(1, "%" + searchedId + "%");
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) { // jeśli jest rekord
                 Student student = new Student();
