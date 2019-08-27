@@ -15,9 +15,11 @@ public class Main {
         } catch (SQLException e) {
             System.err.println("Student dao cannot be created. Mysql error");
             System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
             return;
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Configuration file error");
+            System.err.println("Error: " + e.getMessage());
             return;
         }
 
@@ -46,7 +48,7 @@ public class Main {
                     case "u":
                         System.out.println("podaj id studenta do usunięcia");
                         int idToDelete = Integer.parseInt(scanner.nextLine());
-                        studentDAO.deleteStudent(idToDelete);
+                        System.out.println(studentDAO.deleteStudent(idToDelete));
                         break;
                     case "l":
                         studentDAO.listAllStudents().forEach(System.out::println);

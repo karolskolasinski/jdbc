@@ -1,10 +1,7 @@
 package demo;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,34 +26,41 @@ public class StudentDAO {
 
     public void insertStudent(Student student) throws SQLException {
         try (Connection connection = mysqlConnection.getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement(INSERT_QUERY)) {
+            try (PreparedStatement statement = connection.prepareStatement(INSERT_QUERY, Statement.RETURN_GENERATED_KEYS)) {
                 statement.setString(1, student.getName());
                 statement.setInt(2, student.getAge());
                 statement.setDouble(3, student.getAverage());
                 statement.setBoolean(4, student.isAlive());
-                boolean success = statement.execute();
-                if (success) {
-                    System.out.println("SUKCES!");
+
+//                boolean success = statement.execute();
+                int affectedRecords = statement.executeUpdate();
+                ResultSet resultSet = statement.getGeneratedKeys();
+                if (resultSet.next()) {
+                    Long generatesId = resultSet.getLong(1);
+                    System.out.println("Został utworzony rekord o identyfikatorze: " + generatesId);
                 }
+
             }
         }
     }
 
-    public void deleteStudent(int idToDelete) throws SQLException {
+    public boolean deleteStudent(int idToDelete) throws SQLException {
         try (Connection connection = mysqlConnection.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(DELETE_QUERY)) {
                 statement.setLong(1, idToDelete);
-                boolean success = statement.execute();
-                if (success) {
-                    System.out.println("SUKCES!");
+
+                int affectedRecords = statement.executeUpdate();
+                if (affectedRecords > 0) {
+                    return true;
                 }
             }
         }
+        return false;
     }
 
 
     public Optional<Student> getByNameStudent(String searchedName) throws SQLException {
-        Student student = null;
+        Student student;
         try (Connection connection = mysqlConnection.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(SELECT_BY_NAME_QUERY)) {
                 statement.setString(1, "%" + searchedName + "%");
@@ -71,7 +75,7 @@ public class StudentDAO {
     }
 
     public Optional<Student> getByIdStudent(Long searchedId) throws SQLException {
-        Student student = null;
+        Student student;
         try (Connection connection = mysqlConnection.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(SELECT_BY_ID_QUERY)) {
                 statement.setLong(1, searchedId);
@@ -86,7 +90,7 @@ public class StudentDAO {
     }
 
     public Optional<Student> getByAgeStudent(Long from, Long to) throws SQLException {
-        Student student = null;
+        Student student;
         try (Connection connection = mysqlConnection.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(SELECT_BY_AGE_QUERY)) {
                 statement.setLong(1, from);
